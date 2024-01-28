@@ -59,3 +59,9 @@ while True:
             exit()
     else:
         exit()
+
+    repeat = input("would you liek to do something else (y/n)?\n")
+    if repeat.lower() != "y":
+        break
+
+    conn.close()
