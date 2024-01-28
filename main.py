@@ -52,6 +52,9 @@ while True:
             cur.execute("""SELECT category, SUM(price) FROM expenses
                         WHERE strftime('%m', Date) = ? AND strftime('%Y', Date) = ?
                         GROUP BY category""", (month, year))
+            expense = cur.fetchall()
+            for expense in expenses:
+                print(f"Category: {expense[0]}, Total: {expense[1]}")
         else:
             exit()
     else:
