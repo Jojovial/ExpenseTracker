@@ -13,17 +13,17 @@ def get_categories(cur):
 
 def add_expense(cur, conn):
     while True:
-        date = input("📅 Enter the date of the expense (YYYY-MM-DD): ")
+        date = input("🌿 Enter the date of the expense (YYYY-MM-DD): ")
         try:
             datetime.datetime.strptime(date, "%Y-%m-%d")
             break
         except ValueError:
-            print("❌ Invalid date format. Please enter the date in YYYY-MM-DD format.")
+            print("❌ Oops! That's not the right date format. Please use YYYY-MM-DD.")
 
-    description = input("📝 Enter the description of the expense: ")
+    description = input("🍃 Describe your expense: ")
 
     categories = get_categories(cur)
-    print("📂 Select a category by number:")
+    print("🏝️ Choose a category by number:")
     for idx, category in enumerate(categories):
         print(f"{idx + 1}. {category[0]}")
     print(f"{len(categories) + 1}. ➕ Create a new category")
@@ -44,20 +44,20 @@ def add_expense(cur, conn):
         category = categories[category_choice - 1][0]
 
     while True:
-        price = input("💲 Enter the price of the expense: ")
+        price = input("💰 How many bells did it cost? ")
         try:
             price = float(price)
             break
         except ValueError:
-            print("❌ Invalid price format. Please enter a number.")
+            print("❌ Oops! That's not a valid number of bells.")
 
     try:
         cur.execute("INSERT INTO expenses (Date, description, category, price) VALUES (?, ?, ?, ?)",
                     (date, description, category, price))
         conn.commit()
-        print("✅ Expense added successfully.")
+        print("✅ Your expense has been added successfully.")
     except sqlite3.Error as e:
-        print(f"❌ An error occurred: {e}")
+        print(f"❌ Oh no! An error occurred: {e}")
 
 def view_all_expenses(cur):
     try:
@@ -67,26 +67,26 @@ def view_all_expenses(cur):
         for expense in expenses:
             print(expense)
     except sqlite3.Error as e:
-        print(f"❌ An error occurred: {e}")
+        print(f"❌ Oh no! An error occurred: {e}")
 
 def view_monthly_expenses(cur):
-    month = input("📅 Enter the month (MM): ")
-    year = input("📅 Enter the year (YYYY): ")
+    month = input("🌸 Enter the month (MM): ")
+    year = input("🌸 Enter the year (YYYY): ")
     try:
         cur.execute("""SELECT category, SUM(price) FROM expenses
                        WHERE strftime('%m', Date) = ? AND strftime('%Y', Date) = ?
                        GROUP BY category""", (month, year))
         expenses = cur.fetchall()
-        print(f"📅 Monthly Expenses for {month}/{year}:")
+        print(f"🌿 Monthly Expenses for {month}/{year}:")
         for expense in expenses:
-            print(f"📂 Category: {expense[0]}, 💲 Total: {expense[1]}")
+            print(f"🏷️ Category: {expense[0]}, 💰 Total: {expense[1]} bells")
     except sqlite3.Error as e:
-        print(f"❌ An error occurred: {e}")
+        print(f"❌ Oh no! An error occurred: {e}")
 
 def view_expenses_summary(cur):
     print("📊 Select an option:")
     print("1. 📜 View all expenses")
-    print("2. 📅 View monthly expenses by category")
+    print("2. 🌸 View monthly expenses by category")
     try:
         view_choice = int(input("🔢 Enter your choice: "))
         if view_choice == 1:
