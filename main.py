@@ -45,6 +45,13 @@ def add_expense(cur, conn):
     else:
         category = categories[category_choice - 1][0]
 
+    if category.lower() == "pokémon card":
+        card_name = input("🃏 Enter the Pokémon card name: ")
+        card_rarity = input("⭐ Enter the rarity of the Pokémon card: ")
+    else:
+        card_name = None
+        card_rarity = None
+
     while True:
         price = input("💸 How many PokéCoins did it cost? ")
         try:
@@ -54,8 +61,8 @@ def add_expense(cur, conn):
             print("⚠️ Oops! That's not a valid number of PokéCoins.")
 
     try:
-        cur.execute("INSERT INTO expenses (Date, description, category, price) VALUES (?, ?, ?, ?)",
-                    (date, description, category, price))
+        cur.execute("INSERT INTO expenses (Date, description, category, price, card_name, card_rarity) VALUES (?, ?, ?, ?, ?, ?)",
+                    (date, description, category, price, card_name, card_rarity))
         conn.commit()
         print("✅ Your Pokémon expense has been added successfully.")
     except sqlite3.Error as e:
@@ -68,6 +75,8 @@ def view_all_expenses(cur):
         print("📜 All Pokémon Expenses:")
         for expense in expenses:
             print(f"📅 Date: {expense[0]}, Description: {expense[1]}, Category: {expense[2]}, Cost: {expense[3]} PokéCoins")
+            if expense[4]:
+                print(f"🃏 Pokémon Card: {expense[4]}, ⭐ Rarity: {expense[5]}")
     except sqlite3.Error as e:
         print(f"⚠️ Oh no! An error occurred: {e}")
 
@@ -103,6 +112,16 @@ def view_expenses_summary(cur):
 def main():
     conn = connect_db()
     cur = conn.cursor()
+
+    # Ensure the expenses table includes columns for card name and rarity
+    cur.execute("""CREATE TABLE IF NOT EXISTS expenses (
+                    Date TEXT,
+                    description TEXT,
+                    category TEXT,
+                    price REAL,
+                    card_name TEXT,
+                    card_rarity TEXT)""")
+    conn.commit()
 
     while True:
         print("📊 Select an option:")
