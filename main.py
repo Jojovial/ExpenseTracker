@@ -45,12 +45,17 @@ def add_expense(cur, conn):
     else:
         category = categories[category_choice - 1][0]
 
+    card_name = None
+    card_rarity = None
+    plush_name = None
+    plush_size = None
+
     if category.lower() == "pokémon card":
         card_name = input("🃏 Enter the Pokémon card name: ")
         card_rarity = input("⭐ Enter the rarity of the Pokémon card: ")
-    else:
-        card_name = None
-        card_rarity = None
+    elif category.lower() == "pokémon plush":
+        plush_name = input("🧸 Enter the Pokémon plush name: ")
+        plush_size = input("📏 Enter the size of the Pokémon plush: ")
 
     while True:
         price = input("💸 How many PokéCoins did it cost? ")
@@ -61,8 +66,8 @@ def add_expense(cur, conn):
             print("⚠️ Oops! That's not a valid number of PokéCoins.")
 
     try:
-        cur.execute("INSERT INTO expenses (Date, description, category, price, card_name, card_rarity) VALUES (?, ?, ?, ?, ?, ?)",
-                    (date, description, category, price, card_name, card_rarity))
+        cur.execute("INSERT INTO expenses (Date, description, category, price, card_name, card_rarity, plush_name, plush_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (date, description, category, price, card_name, card_rarity, plush_name, plush_size))
         conn.commit()
         print("✅ Your Pokémon expense has been added successfully.")
     except sqlite3.Error as e:
@@ -77,6 +82,8 @@ def view_all_expenses(cur):
             print(f"📅 Date: {expense[0]}, Description: {expense[1]}, Category: {expense[2]}, Cost: {expense[3]} PokéCoins")
             if expense[4]:
                 print(f"🃏 Pokémon Card: {expense[4]}, ⭐ Rarity: {expense[5]}")
+            if expense[6]:
+                print(f"🧸 Pokémon Plush: {expense[6]}, 📏 Size: {expense[7]}")
     except sqlite3.Error as e:
         print(f"⚠️ Oh no! An error occurred: {e}")
 
@@ -113,14 +120,16 @@ def main():
     conn = connect_db()
     cur = conn.cursor()
 
-    # Ensure the expenses table includes columns for card name and rarity
+    # Ensure the expenses table includes columns for card and plush details
     cur.execute("""CREATE TABLE IF NOT EXISTS expenses (
                     Date TEXT,
                     description TEXT,
                     category TEXT,
                     price REAL,
                     card_name TEXT,
-                    card_rarity TEXT)""")
+                    card_rarity TEXT,
+                    plush_name TEXT,
+                    plush_size TEXT)""")
     conn.commit()
 
     while True:
