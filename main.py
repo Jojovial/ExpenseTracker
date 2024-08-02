@@ -17,7 +17,7 @@ def add_expense(cur, conn):
     while True:
         date = input("🌟 Enter the date of the expense (YYYY-MM-DD): ")
         try:
-            datetime.datetime.strptime(date, "%Y-%M-%D")
+            datetime.datetime.strptime(date, "%Y-%m-%d")
             break
         except ValueError:
             print("⚠️ Oops! That's not the right date format. Please use YYYY-MM-DD.")
@@ -50,6 +50,8 @@ def add_expense(cur, conn):
     plush_name = None
     plush_size = None
     game_platform = None
+    subscription_name = None
+    subscription_duration = None
 
     if category.lower() == "pokémon card":
         card_name = input("🃏 Enter the Pokémon card name: ")
@@ -72,6 +74,9 @@ def add_expense(cur, conn):
                     print("⚠️ Invalid choice. Please select a valid number.")
             except ValueError:
                 print("⚠️ Invalid input. Please enter a number.")
+    elif category.lower() == "subscription service":
+        subscription_name = input("🔔 Enter the subscription service name: ")
+        subscription_duration = input("⏳ Enter the duration of the subscription (e.g., monthly, yearly): ")
 
     while True:
         price = input("💸 How many PokéCoins did it cost? ")
@@ -82,9 +87,9 @@ def add_expense(cur, conn):
             print("⚠️ Oops! That's not a valid number of PokéCoins.")
 
     try:
-        cur.execute("""INSERT INTO expenses (Date, description, category, price, card_name, card_rarity, plush_name, plush_size, game_platform)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (date, description, category, price, card_name, card_rarity, plush_name, plush_size, game_platform))
+        cur.execute("""INSERT INTO expenses (Date, description, category, price, card_name, card_rarity, plush_name, plush_size, game_platform, subscription_name, subscription_duration)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (date, description, category, price, card_name, card_rarity, plush_name, plush_size, game_platform, subscription_name, subscription_duration))
         conn.commit()
         print("✅ Your Pokémon expense has been added successfully.")
     except sqlite3.Error as e:
@@ -103,6 +108,8 @@ def view_all_expenses(cur):
                 print(f"🧸 Pokémon Plush: {expense[6]}, 📏 Size: {expense[7]}")
             if expense[8]:
                 print(f"🎮 Game Platform: {expense[8]}")
+            if expense[9]:
+                print(f"🔔 Subscription Service: {expense[9]}, ⏳ Duration: {expense[10]}")
     except sqlite3.Error as e:
         print(f"⚠️ Oh no! An error occurred: {e}")
 
@@ -139,7 +146,7 @@ def main():
     conn = connect_db()
     cur = conn.cursor()
 
-    # Ensure the expenses table includes columns for card, plush, and game details
+    # Ensure the expenses table includes columns for card, plush, game, and subscription details
     cur.execute("""CREATE TABLE IF NOT EXISTS expenses (
                     Date TEXT,
                     description TEXT,
@@ -149,7 +156,9 @@ def main():
                     card_rarity TEXT,
                     plush_name TEXT,
                     plush_size TEXT,
-                    game_platform TEXT)""")
+                    game_platform TEXT,
+                    subscription_name TEXT,
+                    subscription_duration TEXT)""")
     conn.commit()
 
     while True:
