@@ -22,13 +22,13 @@ def add_expense(cur, conn):
         except ValueError:
             print("⚠️ Oops! That's not the right date format. Please use YYYY-MM-DD.")
 
-    description = input("🔍 Describe your Pokémon expense: ")
+    description = input("🔍 Describe your Pokémon or Animal Crossing expense: ")
 
     categories = get_categories(cur)
     print("🌈 Choose a category by number:")
     for idx, category in enumerate(categories):
         print(f"{idx + 1}. {category[0]}")
-    print(f"{len(categories) + 1}. ✨ Create a new Pokémon category")
+    print(f"{len(categories) + 1}. ✨ Create a new category")
 
     while True:
         try:
@@ -41,7 +41,7 @@ def add_expense(cur, conn):
             print("⚠️ Invalid input. Please enter a number.")
 
     if category_choice == len(categories) + 1:
-        category = input("🆕 Enter the new Pokémon category name: ")
+        category = input("🆕 Enter the new category name: ")
     else:
         category = categories[category_choice - 1][0]
 
@@ -79,19 +79,26 @@ def add_expense(cur, conn):
         subscription_duration = input("⏳ Enter the duration of the subscription (e.g., monthly, yearly): ")
 
     while True:
-        price = input("💸 How many PokéCoins did it cost? ")
+        currency = input("💱 Enter the currency (PokéCoins or Bells): ").strip().lower()
+        if currency in ["pokécoins", "bells"]:
+            break
+        else:
+            print("⚠️ Invalid currency. Please enter 'PokéCoins' or 'Bells'.")
+
+    while True:
+        price = input(f"💸 How many {currency.capitalize()} did it cost? ")
         try:
             price = float(price)
             break
         except ValueError:
-            print("⚠️ Oops! That's not a valid number of PokéCoins.")
+            print(f"⚠️ Oops! That's not a valid number of {currency.capitalize()}.")
 
     try:
-        cur.execute("""INSERT INTO expenses (Date, description, category, price, card_name, card_rarity, plush_name, plush_size, game_platform, subscription_name, subscription_duration)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (date, description, category, price, card_name, card_rarity, plush_name, plush_size, game_platform, subscription_name, subscription_duration))
+        cur.execute("""INSERT INTO expenses (Date, description, category, price, currency, card_name, card_rarity, plush_name, plush_size, game_platform, subscription_name, subscription_duration)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (date, description, category, price, currency, card_name, card_rarity, plush_name, plush_size, game_platform, subscription_name, subscription_duration))
         conn.commit()
-        print("✅ Your Pokémon expense has been added successfully.")
+        print("✅ Your expense has been added successfully.")
     except sqlite3.Error as e:
         print(f"⚠️ Oh no! An error occurred: {e}")
 
@@ -99,17 +106,17 @@ def view_all_expenses(cur):
     try:
         cur.execute("SELECT * FROM expenses")
         expenses = cur.fetchall()
-        print("📜 All Pokémon Expenses:")
+        print("📜 All Expenses:")
         for expense in expenses:
-            print(f"📅 Date: {expense[0]}, Description: {expense[1]}, Category: {expense[2]}, Cost: {expense[3]} PokéCoins")
-            if expense[4]:
-                print(f"🃏 Pokémon Card: {expense[4]}, ⭐ Rarity: {expense[5]}")
-            if expense[6]:
-                print(f"🧸 Pokémon Plush: {expense[6]}, 📏 Size: {expense[7]}")
-            if expense[8]:
-                print(f"🎮 Game Platform: {expense[8]}")
+            print(f"📅 Date: {expense[0]}, Description: {expense[1]}, Category: {expense[2]}, Cost: {expense[3]} {expense[4].capitalize()}")
+            if expense[5]:
+                print(f"🃏 Pokémon Card: {expense[5]}, ⭐ Rarity: {expense[6]}")
+            if expense[7]:
+                print(f"🧸 Pokémon Plush: {expense[7]}, 📏 Size: {expense[8]}")
             if expense[9]:
-                print(f"🔔 Subscription Service: {expense[9]}, ⏳ Duration: {expense[10]}")
+                print(f"🎮 Game Platform: {expense[9]}")
+            if expense[10]:
+                print(f"🔔 Subscription Service: {expense[10]}, ⏳ Duration: {expense[11]}")
     except sqlite3.Error as e:
         print(f"⚠️ Oh no! An error occurred: {e}")
 
@@ -117,20 +124,20 @@ def view_monthly_expenses(cur):
     month = input("🌟 Enter the month (MM): ")
     year = input("🌟 Enter the year (YYYY): ")
     try:
-        cur.execute("""SELECT category, SUM(price) FROM expenses
+        cur.execute("""SELECT category, SUM(price), currency FROM expenses
                        WHERE strftime('%m', Date) = ? AND strftime('%Y', Date) = ?
-                       GROUP BY category""", (month, year))
+                       GROUP BY category, currency""", (month, year))
         expenses = cur.fetchall()
-        print(f"🌟 Monthly Pokémon Expenses for {month}/{year}:")
+        print(f"🌟 Monthly Expenses for {month}/{year}:")
         for expense in expenses:
-            print(f"🏷️ Category: {expense[0]}, 💰 Total: {expense[1]} PokéCoins")
+            print(f"🏷️ Category: {expense[0]}, 💰 Total: {expense[1]} {expense[2].capitalize()}")
     except sqlite3.Error as e:
         print(f"⚠️ Oh no! An error occurred: {e}")
 
 def view_expenses_summary(cur):
     print("📊 Select an option:")
-    print("1. 📜 View all Pokémon expenses")
-    print("2. 🌟 View monthly Pokémon expenses by category")
+    print("1. 📜 View all expenses")
+    print("2. 🌟 View monthly expenses by category")
     try:
         view_choice = int(input("🔢 Enter your choice: "))
         if view_choice == 1:
@@ -146,12 +153,13 @@ def main():
     conn = connect_db()
     cur = conn.cursor()
 
-    # Ensure the expenses table includes columns for card, plush, game, and subscription details
+    # Ensure the expenses table includes columns for card, plush, game, subscription, and currency details
     cur.execute("""CREATE TABLE IF NOT EXISTS expenses (
                     Date TEXT,
                     description TEXT,
                     category TEXT,
                     price REAL,
+                    currency TEXT,
                     card_name TEXT,
                     card_rarity TEXT,
                     plush_name TEXT,
@@ -163,8 +171,8 @@ def main():
 
     while True:
         print("📊 Select an option:")
-        print("1. ➕ Enter a new Pokémon expense")
-        print("2. 📊 View Pokémon expenses summary")
+        print("1. ➕ Enter a new expense")
+        print("2. 📊 View expenses summary")
         print("3. 🚪 Exit")
 
         try:
@@ -178,7 +186,7 @@ def main():
         elif choice == 2:
             view_expenses_summary(cur)
         elif choice == 3:
-            print("🚪 Exiting the Pokémon expense tracker.")
+            print("🚪 Exiting the expense tracker.")
             break
         else:
             print("⚠️ Invalid choice. Please select a valid option.")
